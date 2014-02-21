@@ -1,0 +1,10 @@
+{:+ {:app [(:lt.objs.plugins/load-js "mighttable_compiled.js" true)]
+
+     :editor.metascript [:lt.plugins.metascript/inline-hints
+                         :lt.plugins.metascript/on-change]
+
+     :files [(:lt.objs.files/file-types
+              [{:name "Metascript"
+                :exts [:mjs]
+                :mime "text/x-metascript"
+                :tags [:editor.metascript]}])]}}
