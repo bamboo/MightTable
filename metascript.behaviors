@@ -3,6 +3,7 @@
      :editor.metascript [:lt.plugins.metascript/inline-hints
                          :lt.plugins.metascript/on-change
                          (:lt.objs.editor/tab-settings false 2 2)
+                         :lt.plugins.rainbow/rainbow-parens]
 
      :files [(:lt.objs.files/file-types
               [{:name "Metascript"
