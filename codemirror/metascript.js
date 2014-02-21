@@ -26,6 +26,8 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
     keywords = wordRegexp(commonkeywords);
     builtins = wordRegexp(commonBuiltins);
 
+    var atoms = wordRegexp(['true', 'false', 'null']);
+
     var indentInfo = null;
 
     // tokenizers
@@ -120,6 +122,10 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
 
         if (stream.match(builtins)) {
             return 'builtin';
+        }
+
+        if (stream.match(atoms)) {
+            return 'atom';
         }
 
         if (stream.match(identifiers)) {
