@@ -23,7 +23,7 @@
 
 (defui error-hint [errors]
   [:div.hintwrapper
-   [:ul {:style "background-color: red;"}
+   [:ul {:style "background-color: darkred;"}
     (for [e errors]
       [:li (:message e)])]])
 
