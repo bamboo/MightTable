@@ -1,7 +1,8 @@
-{:+ {:app [(:lt.objs.plugins/load-js "mighttable_compiled.js" true)]
+{:+ {:app [(:lt.objs.plugins/load-js ["codemirror/metascript.js" "mighttable_compiled.js"] true)]
 
      :editor.metascript [:lt.plugins.metascript/inline-hints
-                         :lt.plugins.metascript/on-change]
+                         :lt.plugins.metascript/on-change
+                         (:lt.objs.editor/tab-settings false 2 2)
 
      :files [(:lt.objs.files/file-types
               [{:name "Metascript"
