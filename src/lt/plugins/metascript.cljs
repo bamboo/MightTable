@@ -15,20 +15,35 @@
 (def check-for-errors
   (background
    (fn [obj-id code metascript-path]
-     (let [meta ((js/require metascript-path))
-           compiler (. meta compilerFromString code)
-           ast (. compiler produceAst)
-           errors (.-errors compiler)
-           mjserror->clj (fn [e] {:message (.-message e) :line (.-line e)})
-           errors (vec (map mjserror->clj errors))]
-       (raise obj-id :mjs-hinted errors)))))
+
+     (letfn [(error->clj [e] {:message (.-message e)
+                             :line (dec (.-line e))
+                             :ch (.-column e)
+                             :nested-errors (map-errors (.-nestedErrors e))})
+             (map-errors [es] (vec (map error->clj es)))]
+
+       (let [meta ((js/require metascript-path))
+             compiler (. meta compilerFromString code)
+             ast (. compiler produceAst)
+             errors (map-errors (.-errors compiler))]
+         (raise obj-id :mjs-hinted errors))))))
 
 
-(defui error-hint [errors]
+(declare jump-to)
+
+(defui nested-error-hint [this e]
+  [:li.button (:message e)]
+  :click (fn [] (jump-to this e)))
+
+(defui error-hint [this errors]
   [:div.hintwrapper
    [:ul {:style "background-color: darkred;"}
-    (for [e errors]
-      [:li (:message e)])]])
+    (for [{:keys [message nested-errors]} errors]
+      [:li message
+       (when-not (empty? nested-errors)
+         [:ul
+          (for [ne nested-errors]
+            (nested-error-hint this ne))])])]])
 
 
 (defn preserving-scroll-location-of [this action]
@@ -48,12 +63,11 @@
    this
    #(do
       (remove-mjs-hints-from this)
-      (let [widgets {:mjs-hints
-                     (->> hints
-                          (group-by :line)
-                          (map (fn [[line hs]] (editor/line-widget this (dec line) (error-hint hs))))
-                          (doall))}]
-        (object/merge! this widgets)))))
+      (let [widgets (->> hints
+                         (group-by :line)
+                         (map (fn [[line hs]] (editor/line-widget this line (error-hint this hs))))
+                         (doall))]
+        (object/merge! this {:mjs-hints widgets})))))
 
 
 (object/behavior* ::on-change
