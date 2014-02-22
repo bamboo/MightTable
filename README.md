@@ -16,15 +16,26 @@ lein npm install
 ```
 * Open src/lt/plugins/metascript.cljs in LightTable and execute the command "Editor: build file or project"
 
+# Usage
+
+## Jumping to errors
+
+The plugin provides the commands *:metascript.jump-to-next-error* and *:metascript.jump-to-previous-error* for quick error navigation.
+
+For convenience add the following to your *user.keymap*:
+
+```Clojure
+     :editor.metascript {"alt-pagedown" [:metascript.jump-to-next-error]
+                         "alt-pageup" [:metascript.jump-to-previous-error]}
+```
+
+The commands use the *jump-stack* which means you can jump back with the usual Ctrl-, shortcut.
+
 # TODO
 
 * error display
  * show nested errors together with the main error
  * clicking the nested error goes to the referenced location
-
-* error navigation
- * goto next error
- * goto previous error
 
 * original error location
  * if there's an original location display icon to jump to that location

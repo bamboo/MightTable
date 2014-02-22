@@ -1,8 +1,11 @@
 (ns lt.plugins.metascript
   (:require [lt.objs.editor :as editor]
+            [lt.objs.editor.pool :as pool]
             [lt.object :as object]
             [lt.objs.files :as files]
-            [lt.objs.plugins :as plugins])
+            [lt.objs.plugins :as plugins]
+            [lt.objs.sidebar.command :as cmd]
+            [lt.objs.jump-stack :as jump-stack])
   (:require-macros [lt.macros :refer [defui background behavior]]))
 
 (def metascript-path (files/join
@@ -66,3 +69,46 @@
                   :triggers #{:mjs-hinted}
                   :reaction (fn [this hints]
                               (editor/operation (editor/->cm-ed this) #(update-hints this hints))))
+
+;; error jumping
+
+(defn hinted-line-numbers [editor hints-tag]
+  (let [cm (editor/->cm-ed editor)
+        hints (hints-tag @editor)]
+    (map #(. cm getLineNumber (.-line %)) hints)))
+
+(defn current-line [editor]
+  (:line (editor/->cursor editor)))
+
+(defn next-or-first [x xs]
+  (or (first (subseq xs > x))
+      (first xs)))
+
+(defn previous-or-last [x xs]
+  (or (first (rsubseq xs < x))
+      (last xs)))
+
+(defn jump-to [editor pos]
+  (object/raise jump-stack/jump-stack :jump-stack.push! editor (:path (:info @editor)) pos))
+
+(defn jump-to-error [select-line]
+  (let [editor (pool/last-active)
+        line-ns (apply sorted-set (hinted-line-numbers editor :mjs-hints))
+        line (select-line (current-line editor) line-ns)]
+    (when line
+      (jump-to editor {:line line :ch 0}))))
+
+(defn jump-to-next-error []
+  (jump-to-error next-or-first))
+
+(defn jump-to-previous-error []
+  (jump-to-error previous-or-last))
+
+(cmd/command {:command :metascript.jump-to-next-error
+              :desc "Metascript: Jump to next error in file"
+              :exec (fn [] (jump-to-next-error))})
+
+(cmd/command {:command :metascript.jump-to-previous-error
+              :desc "Metascript: Jump to previous error in file"
+              :exec (fn [] (jump-to-previous-error))})
+
