@@ -16,18 +16,17 @@
   (background
    (fn [obj-id code metascript-path]
 
-     (letfn [(error->clj [e] {:message (.-message e)
+     (letfn [(map-error [e] {:message (.-message e)
                              :line (dec (.-line e))
                              :ch (.-column e)
                              :nested-errors (map-errors (.-nestedErrors e))})
-             (map-errors [es] (vec (map error->clj es)))]
+             (map-errors [es] (vec (map map-error es)))]
 
        (let [meta ((js/require metascript-path))
              compiler (. meta compilerFromString code)
              ast (. compiler produceAst)
              errors (map-errors (.-errors compiler))]
          (raise obj-id :mjs-hinted errors))))))
-
 
 (declare jump-to)
 
@@ -45,21 +44,17 @@
           (for [ne nested-errors]
             (nested-error-hint this ne))])])]])
 
-
 (defn preserving-scroll-location-of [this action]
   (let [cm-ed (editor/->cm-ed this)
         prev (.getScrollInfo cm-ed)]
     (action)
     (.scrollTo cm-ed (.-left prev) (.-top prev))))
 
-
 (defn remove-mjs-hints-from [this]
   (doseq [widget (:widgets (:mjs-hints @this))]
     (editor/remove-line-widget this widget)))
 
-
 (def ->location (juxt :line :ch))
-
 
 (defn update-hints [this hints]
   (preserving-scroll-location-of
@@ -69,8 +64,10 @@
       (let [widgets (->> hints
                          (group-by :line)
                          (map (fn [[line hs]] (editor/line-widget this line (error-hint this hs))))
-                         (doall))]
-        (object/merge! this {:mjs-hints {:widgets widgets :locations (apply sorted-set (map ->location hints))}})))))
+                         (doall))
+            locations (apply sorted-set (map ->location hints))]
+        (object/merge! this {:mjs-hints {:widgets widgets
+                                         :locations locations}})))))
 
 
 (object/behavior* ::on-change
@@ -118,9 +115,10 @@
 
 (cmd/command {:command :metascript.jump-to-next-error
               :desc "Metascript: Jump to next error in file"
-              :exec (fn [] (jump-to-next-error))})
+              :exec jump-to-next-error})
 
 (cmd/command {:command :metascript.jump-to-previous-error
               :desc "Metascript: Jump to previous error in file"
-              :exec (fn [] (jump-to-previous-error))})
+              :exec jump-to-previous-error})
+
 
