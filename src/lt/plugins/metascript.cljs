@@ -54,8 +54,11 @@
 
 
 (defn remove-mjs-hints-from [this]
-  (doseq [hint (:mjs-hints @this)]
-    (editor/remove-line-widget this hint)))
+  (doseq [widget (:widgets (:mjs-hints @this))]
+    (editor/remove-line-widget this widget)))
+
+
+(def ->location (juxt :line :ch))
 
 
 (defn update-hints [this hints]
@@ -67,7 +70,7 @@
                          (group-by :line)
                          (map (fn [[line hs]] (editor/line-widget this line (error-hint this hs))))
                          (doall))]
-        (object/merge! this {:mjs-hints widgets})))))
+        (object/merge! this {:mjs-hints {:widgets widgets :locations (apply sorted-set (map ->location hints))}})))))
 
 
 (object/behavior* ::on-change
@@ -86,14 +89,6 @@
 
 ;; error jumping
 
-(defn hinted-line-numbers [editor hints-tag]
-  (let [cm (editor/->cm-ed editor)
-        hints (hints-tag @editor)]
-    (map #(. cm getLineNumber (.-line %)) hints)))
-
-(defn current-line [editor]
-  (:line (editor/->cursor editor)))
-
 (defn next-or-first [x xs]
   (or (first (subseq xs > x))
       (first xs)))
@@ -105,12 +100,15 @@
 (defn jump-to [editor pos]
   (object/raise jump-stack/jump-stack :jump-stack.push! editor (:path (:info @editor)) pos))
 
-(defn jump-to-error [select-line]
+(defn cursor-location [editor]
+  (->location (editor/->cursor editor)))
+
+(defn jump-to-error [select-location]
   (let [editor (pool/last-active)
-        line-ns (apply sorted-set (hinted-line-numbers editor :mjs-hints))
-        line (select-line (current-line editor) line-ns)]
-    (when line
-      (jump-to editor {:line line :ch 0}))))
+        locations (:locations (:mjs-hints @editor))
+        location (select-location (cursor-location editor) locations)]
+    (when-let [[line ch] location]
+      (jump-to editor {:line line :ch ch}))))
 
 (defn jump-to-next-error []
   (jump-to-error next-or-first))
