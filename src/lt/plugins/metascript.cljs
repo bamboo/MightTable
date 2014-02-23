@@ -30,19 +30,19 @@
 
 (declare jump-to)
 
-(defui nested-error-hint [this e]
-  [:li.button (:message e)]
-  :click (fn [] (jump-to this e)))
+(defui clickable [tag this e]
+  [tag {:style "cursor: pointer;"} (:message e)]
+  :click #(jump-to this e))
 
 (defui error-hint [this errors]
   [:div.hintwrapper
    [:ul {:style "background-color: darkred;"}
-    (for [{:keys [message nested-errors]} errors]
-      [:li message
+    (for [{:keys [nested-errors] :as e} errors]
+      [:li (clickable :div this e)
        (when-not (empty? nested-errors)
          [:ul
           (for [ne nested-errors]
-            (nested-error-hint this ne))])])]])
+            (clickable :li.button this ne))])])]])
 
 (defn preserving-scroll-location-of [this action]
   (let [cm-ed (editor/->cm-ed this)
