@@ -20,7 +20,7 @@
                              :line (dec (.-line e))
                              :ch (.-column e)
                              :nested-errors (map-errors (.-nestedErrors e))})
-             (map-errors [es] (vec (map map-error es)))]
+             (map-errors [es] (mapv map-error es))]
 
        (let [meta ((js/require metascript-path))
              compiler (. meta compilerFromString code)
@@ -63,8 +63,7 @@
       (remove-mjs-hints-from this)
       (let [widgets (->> hints
                          (group-by :line)
-                         (map (fn [[line hs]] (editor/line-widget this line (error-hint this hs))))
-                         (doall))
+                         (mapv (fn [[line hs]] (editor/line-widget this line (error-hint this hs)))))
             locations (apply sorted-set (map ->location hints))]
         (object/merge! this {:mjs-hints {:widgets widgets
                                          :locations locations}})))))
