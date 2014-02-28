@@ -1,4 +1,5 @@
 (ns lt.plugins.metascript
+
   (:require [lt.objs.editor :as editor]
             [lt.objs.editor.pool :as pool]
             [lt.object :as object]
@@ -6,21 +7,15 @@
             [lt.objs.plugins :as plugins]
             [lt.objs.sidebar.command :as cmd]
             [lt.objs.jump-stack :as jump-stack]
-            [lt.plugins.js :as js-lang]
-            [lt.objs.eval :as eval]
-            [lt.objs.notifos :as notifos])
+            [lt.plugins.js :as js-lang])
 
   (:require-macros [lt.macros :refer [defui background behavior]]))
-
-(def util-inspect (.-inspect (js/require "util")))
-
-(defn inspect [thing & [depth]]
-  (util-inspect thing false (or depth 5)))
 
 
 (def metascript-path (files/join
                       (or plugins/*plugin-dir* "/home/bamboo/.config/LightTable/plugins/MightTable")
                       "node_modules/meta-script"))
+
 
 (def check-for-errors
   (background
@@ -96,44 +91,53 @@
 
 ;; code evaluation
 
-(defn eval-one [editor]
-  (let [info (:info @editor)
-        info (if (editor/selection? editor)
-               (assoc info
-                 :code (editor/selection editor)
-                 :meta {:start {:line (-> (editor/->cursor editor "start") :line)}
-                        :end {:line (-> (editor/->cursor editor "end") :line)}
-                        :type "ExpressionStatement"})
-               (let [line (:line (editor/->cursor editor))]
-                 (assoc info
-                   :code (editor/line editor line)
-                   :meta {:start {:line line} :end {:line line} :type "ExpressionStatement"})))]
+(defn ast->seq [ast]
+  (tree-seq
+   (fn [node] (pos? (. node argCount)))
+   (fn [node] (for [i (range (. node argCount))] (. node argAt i)))
+   ast))
 
-    (object/raise js-lang/js-lang :eval! {:origin editor
-                                          :info info})))
+(defn ast->line [ast]
+  (-> ast .-loc .-start .-line))
+
+(defn select-node [ast line]
+  (first (filter #(= line (ast->line %)) (ast->seq ast))))
+
+(def meta-script ((js/require metascript-path)))
+
+(defn compile [code line]
+  (let [compiler (. meta-script compilerFromString code)
+        ast (-> (doto compiler (. parse) (. pipeline)) .-root)
+        node (select-node ast line)]
+    (when node
+      (let [jsAst (. compiler jsAstFor node)]
+        (.-code (. compiler generate jsAst))))))
+
+
+(defn eval-one [editor]
+  (try
+    (let [info (:info @editor)
+          info (if (editor/selection? editor)
+                 (assoc info
+                   :code (editor/selection editor)
+                   :meta {:start {:line (-> (editor/->cursor editor "start") :line)}
+                          :end {:line (-> (editor/->cursor editor "end") :line)}
+                          :type "ExpressionStatement"})
+                 (let [line (:line (editor/->cursor editor))]
+                   (assoc info
+                     :code (compile (editor/->val editor) (inc line))
+                     :meta {:start {:line line} :end {:line line} :type "ExpressionStatement"})))]
+
+      (println (:code info))
+      (object/raise js-lang/js-lang :eval! {:origin editor :info info}))
+
+    (catch js/global.Error e
+      (object/raise editor :editor.eval.js.exception {:ex e :meta {:end {:line (dec (.-loc.line e))}}}))))
+
 
 (behavior ::on-eval.one
           :triggers #{:eval.one}
           :reaction (fn [editor] (eval-one editor)))
-
-(defn expression? [{:keys [type]}]
-  (= type "ExpressionStatement"))
-
-
-(behavior ::js-result
-          :triggers #{:editor.eval.js.result}
-          :reaction (fn [editor res]
-                      (notifos/done-working)
-                      (let [loc (-> res :meta :end)
-                            loc (assoc loc :start-line (-> res :meta :start :line))]
-                        (if (expression? (:meta res))
-                          (let [str-result (if (:no-inspect res)
-                                             (if (:result res)
-                                               (:result res)
-                                               "undefined")
-                                             (inspect (:result res)))]
-                            (object/raise editor :editor.result str-result loc {:prefix " = "}))
-                          (object/raise editor :editor.result "✓" loc {:prefix " "})))))
 
 
 ;; error jumping
