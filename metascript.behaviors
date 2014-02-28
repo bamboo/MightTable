@@ -2,6 +2,8 @@
 
      :editor.metascript [:lt.plugins.metascript/inline-hints
                          :lt.plugins.metascript/on-change
+                         :lt.plugins.metascript/on-eval.one
+                         :lt.plugins.metascript/js-result
                          (:lt.objs.editor/tab-settings false 2 2)
                          :lt.plugins.rainbow/rainbow-parens]
 

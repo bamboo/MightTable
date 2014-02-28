@@ -5,8 +5,18 @@
             [lt.objs.files :as files]
             [lt.objs.plugins :as plugins]
             [lt.objs.sidebar.command :as cmd]
-            [lt.objs.jump-stack :as jump-stack])
+            [lt.objs.jump-stack :as jump-stack]
+            [lt.plugins.js :as js-lang]
+            [lt.objs.eval :as eval]
+            [lt.objs.notifos :as notifos])
+
   (:require-macros [lt.macros :refer [defui background behavior]]))
+
+(def util-inspect (.-inspect (js/require "util")))
+
+(defn inspect [thing & [depth]]
+  (util-inspect thing false (or depth 5)))
+
 
 (def metascript-path (files/join
                       (or plugins/*plugin-dir* "/home/bamboo/.config/LightTable/plugins/MightTable")
@@ -82,6 +92,49 @@
                   :triggers #{:mjs-hinted}
                   :reaction (fn [this hints]
                               (editor/operation (editor/->cm-ed this) #(update-hints this hints))))
+
+
+;; code evaluation
+
+(defn eval-one [editor]
+  (let [info (:info @editor)
+        info (if (editor/selection? editor)
+               (assoc info
+                 :code (editor/selection editor)
+                 :meta {:start {:line (-> (editor/->cursor editor "start") :line)}
+                        :end {:line (-> (editor/->cursor editor "end") :line)}
+                        :type "ExpressionStatement"})
+               (let [line (:line (editor/->cursor editor))]
+                 (assoc info
+                   :code (editor/line editor line)
+                   :meta {:start {:line line} :end {:line line} :type "ExpressionStatement"})))]
+
+    (object/raise js-lang/js-lang :eval! {:origin editor
+                                          :info info})))
+
+(behavior ::on-eval.one
+          :triggers #{:eval.one}
+          :reaction (fn [editor] (eval-one editor)))
+
+(defn expression? [{:keys [type]}]
+  (= type "ExpressionStatement"))
+
+
+(behavior ::js-result
+          :triggers #{:editor.eval.js.result}
+          :reaction (fn [editor res]
+                      (notifos/done-working)
+                      (let [loc (-> res :meta :end)
+                            loc (assoc loc :start-line (-> res :meta :start :line))]
+                        (if (expression? (:meta res))
+                          (let [str-result (if (:no-inspect res)
+                                             (if (:result res)
+                                               (:result res)
+                                               "undefined")
+                                             (inspect (:result res)))]
+                            (object/raise editor :editor.result str-result loc {:prefix " = "}))
+                          (object/raise editor :editor.result "✓" loc {:prefix " "})))))
+
 
 ;; error jumping
 
