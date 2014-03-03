@@ -5,6 +5,7 @@
             [lt.object :as object]
             [lt.objs.files :as files]
             [lt.objs.plugins :as plugins]
+            [lt.objs.bottombar :as bottombar]
             [lt.objs.sidebar.command :as cmd]
             [lt.objs.jump-stack :as jump-stack]
             [lt.plugins.js :as js-lang])
@@ -182,3 +183,34 @@
               :exec jump-to-previous-error})
 
 
+;; errors panel
+
+(defui errors-ui [this]
+  [:ul.console])
+
+(object/object* ::errors
+                :tags #{:errors}
+                :name "metascript errors"
+                :dirty false
+                :init (fn [this]
+                        (object/merge! this {:current-ui :bottom})
+                        (errors-ui this)))
+
+(defn show-active-errors [this]
+  (println (:mjs-hints this)))
+
+(behavior ::show-active-errors
+          :triggers #{:active}
+          :reaction (fn [this] (show-active-errors this)))
+
+(def errors (object/create ::errors))
+
+(bottombar/add-item errors)
+;(bottombar/active? errors)
+
+(defn toggle-errors []
+  (object/raise bottombar/bottombar :toggle errors))
+
+(cmd/command {:command :metascript.toggle-errors-ui
+              :desc "Metascript: Toggle errors panel"
+              :exec toggle-errors})
