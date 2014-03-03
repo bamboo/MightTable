@@ -16,11 +16,9 @@
                       (or plugins/*plugin-dir* "/home/bamboo/.config/LightTable/plugins/MightTable")
                       "node_modules/meta-script"))
 
-
 (def check-for-errors
   (background
    (fn [obj-id code metascript-path]
-
      (letfn [(map-error [e] {:message (.-message e)
                              :line (dec (.-line e))
                              :ch (.-column e)
@@ -97,24 +95,52 @@
    (fn [node] (for [i (range (. node argCount))] (. node argAt i)))
    ast))
 
-(defn ast->line [ast]
-  (-> ast .-loc .-start .-line))
-
-(defn select-node [ast line]
-  (->> (ast->seq ast)
-       (filter #(= line (ast->line %)))
-       first))
-
 (def meta-script ((js/require metascript-path)))
 
-(defn compile [code line]
+(def util-inspect (.-inspect (js/require "util")))
+
+(defn inspect [thing depth]
+  (util-inspect thing false (or depth 5)))
+
+(defn parse [code]
   (let [compiler (. meta-script compilerFromString code)
-        ast (-> (doto compiler (. parse) (. pipeline)) .-root)
-        node (select-node ast line)]
-    (when node
+        ast (-> (doto compiler (. parse) (. pipeline)) .-root)]
+    (. ast normalizeLocation)
+    {:ast ast :compiler compiler}))
+
+(defn node-to-the-left [ast line column]
+  (->> (ast->seq ast)
+      (filter
+       #(and (= line (.-loc.end.line %)) (<= (.-loc.end.column %) column)
+             (zero? (.-loc.start.column %))))
+      first))
+
+(defn compile [code line ch]
+  (let [{:keys [ast compiler]} (parse code)]
+    (when-let [node (node-to-the-left ast line ch)]
+      (println node)
       (let [jsAst (. compiler jsAstFor node)]
         (.-code (. compiler generate jsAst))))))
 
+(defn dump-node [node]
+  (println (. node id) (inspect (.-loc node) 2)))
+
+(defn dump-nodes [nodes]
+  (dorun (map dump-node nodes)))
+
+(defn dump [ast]
+  (dump-nodes (ast->seq ast)))
+
+(defn ->ast [code]
+  (->> code parse :ast))
+
+(dump (->ast "console.log(42)"))
+
+(comment
+  (dump-node
+   (node-to-the-left
+    (->ast "app.get\n  'client.js'\n  (res, rsp) -> rsp.sendfile './client.js'")
+    3 42)))
 
 (defn eval-one [editor]
   (try
@@ -125,9 +151,9 @@
                    :meta {:start {:line (-> (editor/->cursor editor "start") :line)}
                           :end {:line (-> (editor/->cursor editor "end") :line)}
                           :type "ExpressionStatement"})
-                 (let [line (:line (editor/->cursor editor))]
+                 (let [{:keys [line ch]} (editor/->cursor editor)]
                    (assoc info
-                     :code (compile (editor/->val editor) (inc line))
+                     :code (compile (editor/->val editor) (inc line) ch)
                      :meta {:start {:line line}
                             :end {:line line}
                             :type "ExpressionStatement"})))]
@@ -180,5 +206,3 @@
 (cmd/command {:command :metascript.jump-to-previous-error
               :desc "Metascript: Jump to previous error in file"
               :exec jump-to-previous-error})
-
-
