@@ -101,7 +101,9 @@
   (-> ast .-loc .-start .-line))
 
 (defn select-node [ast line]
-  (first (filter #(= line (ast->line %)) (ast->seq ast))))
+  (->> (ast->seq ast)
+       (filter #(= line (ast->line %)))
+       first))
 
 (def meta-script ((js/require metascript-path)))
 
@@ -126,7 +128,9 @@
                  (let [line (:line (editor/->cursor editor))]
                    (assoc info
                      :code (compile (editor/->val editor) (inc line))
-                     :meta {:start {:line line} :end {:line line} :type "ExpressionStatement"})))]
+                     :meta {:start {:line line}
+                            :end {:line line}
+                            :type "ExpressionStatement"})))]
 
       (println (:code info))
       (object/raise js-lang/js-lang :eval! {:origin editor :info info}))
