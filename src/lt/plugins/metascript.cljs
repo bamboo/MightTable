@@ -134,7 +134,7 @@
 (defn ->ast [code]
   (->> code parse :ast))
 
-(dump (->ast "console.log(42)"))
+(comment (dump (->ast "console.log(42)")))
 
 (comment
   (dump-node
