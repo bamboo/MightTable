@@ -12,9 +12,10 @@
   (:require-macros [lt.macros :refer [defui background behavior]]))
 
 
-(def metascript-path (files/join
-                      (or plugins/*plugin-dir* "/home/bamboo/.config/LightTable/plugins/MightTable")
-                      "node_modules/meta-script"))
+(def metascript-path
+  (files/join
+   (or plugins/*plugin-dir* "/home/bamboo/.config/LightTable/plugins/MightTable")
+   "node_modules/meta-script"))
 
 (def check-for-errors
   (background
@@ -107,13 +108,6 @@
         ast (-> (doto compiler (. parse) (. pipeline)) .-root)]
     (. ast normalizeLocation)
     {:ast ast :compiler compiler}))
-
-(defn node-to-the-left [ast line column]
-  (->> (ast->seq ast)
-      (filter
-       #(and (= line (.-loc.end.line %)) (<= (.-loc.end.column %) column)
-             (zero? (.-loc.start.column %))))
-      first))
 
 (defn compile [code line ch]
   (let [{:keys [ast compiler]} (parse code)]
