@@ -117,10 +117,10 @@
 
 (defn compile [code line ch]
   (let [{:keys [ast compiler]} (parse code)]
-    (when-let [node (node-to-the-left ast line ch)]
-      (println node)
-      (let [jsAst (. compiler jsAstFor node)]
-        (.-code (. compiler generate jsAst))))))
+    (when-let [node (. ast findTopLevelAt line ch)]
+      (let [jsAst (. compiler jsAstFor node)
+            code (.-code (. compiler generate jsAst))]
+        {:code code :node node :js-ast jsAst}))))
 
 (defn dump-node [node]
   (println (. node id) (inspect (.-loc node) 2)))
@@ -134,13 +134,14 @@
 (defn ->ast [code]
   (->> code parse :ast))
 
-(comment (dump (->ast "console.log(42)")))
+(defn loc->map [loc]
+  {:line (dec (.-line loc))
+   :ch (.-column loc)})
 
-(comment
-  (dump-node
-   (node-to-the-left
-    (->ast "app.get\n  'client.js'\n  (res, rsp) -> rsp.sendfile './client.js'")
-    3 42)))
+(defn node->meta [node]
+  {:start (loc->map (.-loc.start node))
+   :end (loc->map (.-loc.end node))
+   :type "ExpressionStatement"})
 
 (defn eval-one [editor]
   (try
@@ -151,12 +152,11 @@
                    :meta {:start {:line (-> (editor/->cursor editor "start") :line)}
                           :end {:line (-> (editor/->cursor editor "end") :line)}
                           :type "ExpressionStatement"})
-                 (let [{:keys [line ch]} (editor/->cursor editor)]
+                 (let [{:keys [line ch]} (editor/->cursor editor)
+                       {:keys [code node]} (compile (editor/->val editor) (inc line) ch)]
                    (assoc info
-                     :code (compile (editor/->val editor) (inc line) ch)
-                     :meta {:start {:line line}
-                            :end {:line line}
-                            :type "ExpressionStatement"})))]
+                     :code code
+                     :meta (node->meta node))))]
 
       (println (:code info))
       (object/raise js-lang/js-lang :eval! {:origin editor :info info}))
