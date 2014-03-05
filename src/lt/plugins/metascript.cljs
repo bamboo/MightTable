@@ -156,7 +156,9 @@
       (object/raise js-lang/js-lang :eval! {:origin editor :info info}))
 
     (catch js/global.Error e
-      (object/raise editor :editor.eval.js.exception {:ex e :meta {:end {:line (dec (.-loc.line e))}}}))))
+      (object/raise editor
+                    :editor.eval.js.exception
+                    {:ex e :meta {:end {:line (dec (.-loc.line e))}}}))))
 
 
 (behavior ::on-eval.one
