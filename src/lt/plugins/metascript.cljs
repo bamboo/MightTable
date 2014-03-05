@@ -137,15 +137,26 @@
    :end (loc->map (.-loc.end node))
    :type "ExpressionStatement"})
 
+(defn connected? [editor]
+  (contains? @editor :client))
+
 (defn eval-one [editor]
   (try
     (let [info (:info @editor)
+
+          ; when already connected to a :client
+          ; mask the path as ltuser so a possible node :client
+          ; doesn't try to evaluate the file
+          info (if (connected? editor) (assoc info :path "ltuser") info)
+
           info (if (editor/selection? editor)
+
                  (assoc info
                    :code (editor/selection editor)
                    :meta {:start {:line (-> (editor/->cursor editor "start") :line)}
                           :end {:line (-> (editor/->cursor editor "end") :line)}
                           :type "ExpressionStatement"})
+
                  (let [{:keys [line ch]} (editor/->cursor editor)
                        {:keys [code node]} (compile (editor/->val editor) (inc line) ch)]
                    (assoc info
