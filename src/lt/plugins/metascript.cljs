@@ -137,17 +137,27 @@
    :end (loc->map (.-loc.end node))
    :type "ExpressionStatement"})
 
-(defn connected? [editor]
-  (contains? @editor :client))
+(defn has-nodejs-client?
+  "checks if the editor is connected."
+  [editor]
+  (when-let [client (-> @editor :client :default)]
+    (and (:tags @client)
+         (object/has-tag? client :nodejs.client))))
+
+;(def server (first (pool/containing-path "server.mjs")))
+;(inspect @server 1)
+;(connected? server)
+;(-> @server :client :default deref :tags)
 
 (defn eval-one [editor]
   (try
     (let [info (:info @editor)
 
-          ; when already connected to a :client
-          ; mask the path as ltuser so a possible node :client
-          ; doesn't try to evaluate the file
-          info (if (connected? editor) (assoc info :path "ltuser") info)
+          ; when already connected to a nodejs client
+          ; mask the path as ltuser to prevent file evaluation
+          info (if (has-nodejs-client? editor)
+                 (assoc info :path "ltuser")
+                 info)
 
           info (if (editor/selection? editor)
 
