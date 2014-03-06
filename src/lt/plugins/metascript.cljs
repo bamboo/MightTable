@@ -32,6 +32,9 @@
              errors (map-errors (.-errors compiler))]
          (raise obj-id :mjs-hinted errors))))))
 
+(defn start-check-for-errors [this]
+  (check-for-errors this (editor/->val this) metascript-path))
+
 (declare jump-to)
 
 (defui clickable [tag editor hint]
@@ -72,20 +75,56 @@
         (object/merge! this {:mjs-hints {:widgets widgets
                                          :locations locations}})))))
 
+(defn hintable? [this]
+  (object/has-tag? this :metascript.hintable))
 
-(object/behavior* ::on-change
+
+(object/behavior* ::hint-on-change
                   :debounce 750
                   :type :user
                   :desc "Metascript Errors: Check for Metascript errors on change"
                   :triggers #{:change}
-                  :reaction (fn [this]
-                              (check-for-errors this (editor/->val this) metascript-path)))
+                  :reaction start-check-for-errors)
 
 
 (object/behavior* ::inline-hints
                   :triggers #{:mjs-hinted}
                   :reaction (fn [this hints]
                               (editor/operation (editor/->cm-ed this) #(update-hints this hints))))
+
+
+(object/behavior* ::tags-removed
+                  :triggers #{:lt.object/tags-removed}
+                  :reaction (fn [this t]
+                              (when-not (hintable? this)
+                                (remove-mjs-hints-from this))))
+
+
+(object/behavior* ::tags-added
+                  :triggers #{:lt.object/tags-added}
+                  :reaction (fn [this t]
+                              (when (hintable? this)
+                                (start-check-for-errors this))))
+
+
+(defn enable-error-hints []
+  (when-let [editor (pool/last-active)]
+    (object/add-tags editor [:metascript.hintable])))
+
+(defn disable-error-hints []
+  (when-let [editor (pool/last-active)]
+    (object/remove-tags editor [:metascript.hintable])))
+
+
+(cmd/command {:command :metascript.disable-file-hints
+              :desc "Metascript: Disable error hints in file"
+              :exec disable-error-hints})
+
+
+(cmd/command {:command :metascript.enable-file-hints
+              :desc "Metascript: Enable error hints in file"
+              :exec enable-error-hints})
+
 
 
 ;; code evaluation

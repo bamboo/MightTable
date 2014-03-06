@@ -1,11 +1,14 @@
 {:+ {:app [(:lt.objs.plugins/load-js ["codemirror/metascript.js" "mighttable_compiled.js"] true)]
 
-     :editor.metascript [:lt.plugins.metascript/inline-hints
-                         :lt.plugins.metascript/on-change
+     :metascript.hintable [:lt.plugins.metascript/inline-hints
+                           :lt.plugins.metascript/hint-on-change]
+
+     :editor.metascript [(:lt.object/add-tag :metascript.hintable)
+                         :lt.plugins.metascript/tags-removed
+                         :lt.plugins.metascript/tags-added
                          :lt.plugins.metascript/on-eval.one
                          :lt.plugins.js/js-exception
                          :lt.plugins.js/js-result
-                         :lt.plugins.metascript/show-active-errors
                          (:lt.objs.editor/tab-settings false 2 2)
                          :lt.plugins.rainbow/rainbow-parens]
 
