@@ -19,7 +19,7 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
                           'try', 'catch', 'throw', 'finally',
                           'if', 'else',
                           'loop', 'next', 'end',
-                          'do', 'give'];
+                          'do', 'give', 'return'];
     var commonBuiltins = ['require', '#external',
                           'Object', 'Array', 'String'];
     var stringPrefixes = new RegExp("^['\"]");
