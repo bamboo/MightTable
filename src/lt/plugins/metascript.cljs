@@ -129,10 +129,14 @@
 
 ;; code evaluation
 
-(defn ast->seq [ast]
+(defn node-seq [node]
+  (for [i (range (. node argCount))]
+    (. node argAt i)))
+
+(defn ast-seq [ast]
   (tree-seq
    (fn [node] (pos? (. node argCount)))
-   (fn [node] (for [i (range (. node argCount))] (. node argAt i)))
+   node-seq
    ast))
 
 (def meta-script ((js/require metascript-path)))
@@ -162,7 +166,7 @@
   (dorun (map dump-node nodes)))
 
 (defn dump [ast]
-  (dump-nodes (ast->seq ast)))
+  (dump-nodes (ast-seq ast)))
 
 (defn ->ast [code]
   (->> code parse :ast))
