@@ -33,6 +33,10 @@ The commands use the *jump-stack* which means you can jump back with the usual C
 
 # TODO
 
+* eval whole file
+
+* use compiled js path with node client
+
 * original error location
  * if there's an original location display icon to jump to that location
  * to test write a macro that produces wrong code (coming from quoted code)
