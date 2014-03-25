@@ -152,12 +152,15 @@
     (. ast normalizeLocation)
     {:ast ast :compiler compiler}))
 
-(defn compile [code line ch]
+(defn compile-node [compiler node]
+  (let [jsAst (. compiler jsAstFor node)
+        code (.-code (. compiler generate jsAst))]
+    {:code code :node node :js-ast jsAst}))
+
+(defn compile-top-level-at [code line ch]
   (let [{:keys [ast compiler]} (parse code)]
     (when-let [node (. ast findTopLevelAt line ch)]
-      (let [jsAst (. compiler jsAstFor node)
-            code (.-code (. compiler generate jsAst))]
-        {:code code :node node :js-ast jsAst}))))
+      (compile-node compiler node))))
 
 (defn dump-node [node]
   (println (. node id) (inspect (.-loc node) 2)))
@@ -187,12 +190,8 @@
     (and (:tags @client)
          (object/has-tag? client :nodejs.client))))
 
-;(def server (first (pool/containing-path "server.mjs")))
-;(inspect @server 1)
-;(connected? server)
-;(-> @server :client :default deref :tags)
 
-(defn eval-one [editor]
+(defn eval [editor {:keys [code node]}]
   (try
     (let [info (:info @editor)
 
@@ -202,21 +201,11 @@
                  (assoc info :path "ltuser")
                  info)
 
-          info (if (editor/selection? editor)
+          info (assoc info
+                 :code code
+                 :meta (node->meta node))]
 
-                 (assoc info
-                   :code (editor/selection editor)
-                   :meta {:start {:line (-> (editor/->cursor editor "start") :line)}
-                          :end {:line (-> (editor/->cursor editor "end") :line)}
-                          :type "ExpressionStatement"})
-
-                 (let [{:keys [line ch]} (editor/->cursor editor)
-                       {:keys [code node]} (compile (editor/->val editor) (inc line) ch)]
-                   (assoc info
-                     :code code
-                     :meta (node->meta node))))]
-
-      (println (:code info))
+      (println code)
       (object/raise js-lang/js-lang :eval! {:origin editor :info info}))
 
     (catch js/global.Error e
@@ -224,10 +213,30 @@
                     :editor.eval.js.exception
                     {:ex e :meta {:end {:line (dec (.-loc.line e))}}}))))
 
+(defn eval-one [editor]
+  (try
+    (let [{:keys [line ch]} (editor/->cursor editor)]
+      (eval editor (compile-top-level-at (editor/->val editor) (inc line) ch)))
+    (catch js/global.Error e
+      (object/raise editor
+                    :editor.eval.js.exception
+                    {:ex e :meta {:end {:line (dec (.-loc.line e))}}}))))
+
+(defn eval-file [editor]
+  (let [code (editor/->val editor)
+        {:keys [ast compiler]} (parse code)]
+    (dorun
+     (map #(eval editor (compile-node compiler %))
+          (node-seq ast)))))
+
 
 (behavior ::on-eval.one
           :triggers #{:eval.one}
           :reaction (fn [editor] (eval-one editor)))
+
+(behavior ::on-eval
+          :triggers #{:eval}
+          :reaction (fn [editor] (eval-file editor)))
 
 
 ;; error jumping
