@@ -12,7 +12,7 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
     var doubleOperators = parserConf.doubleOperators || new RegExp("^((->)|(==)|(!=)|(<=)|(>=)|(<>)|(<<)|(>>)|(//)|(\\*\\*))");
     var doubleDelimiters = parserConf.doubleDelimiters || new RegExp("^((\\+=)|(\\-=)|(\\*=)|(%=)|(/=)|(&=)|(\\|=)|(\\^=))");
     var tripleDelimiters = parserConf.tripleDelimiters || new RegExp("^((//=)|(>>=)|(<<=)|(\\*\\*=))");
-    var identifiers = parserConf.identifiers|| new RegExp("^[_A-Za-z][_A-Za-z0-9]*");
+    var identifiers = parserConf.identifiers|| new RegExp("^[_A-Za-z][_A-Za-z0-9->]*");
 
     var wordOperators = wordRegexp(['typeof', 'instanceof', 'not']);
     var commonkeywords = ['var', 'meta', 'macro',
