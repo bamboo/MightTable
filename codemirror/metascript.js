@@ -22,7 +22,8 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
                           'do', 'give', 'return', 'new',
                           'delete', 'this'];
     var commonBuiltins = ['require', '#external',
-                          'Object', 'Array', 'String'];
+                          'Object', 'Array', 'String',
+                          'JSON'];
     var stringPrefixes = new RegExp("^('{3}|\"{3}|['\"])");
     keywords = wordRegexp(commonkeywords);
     builtins = wordRegexp(commonBuiltins);
