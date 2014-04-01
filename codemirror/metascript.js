@@ -15,7 +15,7 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
     var identifiers = parserConf.identifiers|| new RegExp("^[_A-Za-z][_A-Za-z0-9->]*");
 
     var wordOperators = wordRegexp(['typeof', 'instanceof', 'not']);
-    var commonkeywords = ['var', 'meta', 'macro',
+    var commonkeywords = ['var', 'meta', 'macro', 'const',
                           'try', 'catch', 'throw', 'finally',
                           'if', 'else',
                           'loop', 'next', 'end',
@@ -130,7 +130,8 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
         }
 
         if (stream.match(identifiers)) {
-            if (state.lastToken == 'var' || state.lastToken == 'macro') {
+            var lastToken = state.lastToken;
+            if (lastToken == 'var' || lastToken == 'const' || lastToken == 'macro') {
                 return 'def';
             }
             return 'identifier';
