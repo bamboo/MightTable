@@ -20,7 +20,7 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
                           'if', 'else',
                           'loop', 'next', 'end',
                           'do', 'give', 'return', 'new',
-                          'this'];
+                          'delete', 'this'];
     var commonBuiltins = ['require', '#external',
                           'Object', 'Array', 'String'];
     var stringPrefixes = new RegExp("^('{3}|\"{3}|['\"])");
