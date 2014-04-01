@@ -70,7 +70,8 @@
       (remove-mjs-hints-from this)
       (let [widgets (->> hints
                          (group-by :line)
-                         (mapv (fn [[line hs]] (editor/line-widget this line (error-hint this hs)))))
+                         (mapv (fn [[line hs]]
+                                 (editor/line-widget this line (error-hint this hs)))))
             locations (apply sorted-set (map ->location hints))]
         (object/merge! this {:mjs-hints {:widgets widgets
                                          :locations locations}})))))
