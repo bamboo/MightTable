@@ -13,7 +13,7 @@
 
 
 (object/object* ::mjs-lang
-                :tags #{::print-js-code})
+                :tags #{})
 
 (def mjs-lang (object/create ::mjs-lang))
 
