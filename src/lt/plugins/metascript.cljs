@@ -12,6 +12,12 @@
   (:require-macros [lt.macros :refer [defui background behavior]]))
 
 
+(object/object* ::mjs-lang
+                :tags #{::print-js-code})
+
+(def mjs-lang (object/create ::mjs-lang))
+
+
 (def metascript-path
   (files/join
    (or plugins/*plugin-dir* "/home/bamboo/.config/LightTable/plugins/MightTable")
@@ -206,7 +212,9 @@
                  :code code
                  :meta (node->meta node))]
 
-      (println code)
+      (when (object/has-tag? mjs-lang ::print-js-code)
+        (println code))
+
       (object/raise js-lang/js-lang :eval! {:origin editor :info info}))
 
     (catch js/global.Error e
@@ -238,6 +246,18 @@
 (behavior ::on-eval
           :triggers #{:eval}
           :reaction (fn [editor] (eval-file editor)))
+
+
+
+(cmd/command {:command :metascript.disable-file-hints
+              :desc "Metascript: Disable javascript code output"
+              :exec (fn [] (object/remove-tags mjs-lang [::print-js-code]))})
+
+
+(cmd/command {:command :metascript.enable-file-hints
+              :desc "Metascript: Enable javascript code output"
+              :exec (fn [] (object/add-tags mjs-lang [::print-js-code]))})
+
 
 
 ;; error jumping
