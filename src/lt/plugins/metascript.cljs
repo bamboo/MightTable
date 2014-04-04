@@ -249,12 +249,14 @@
 
 
 
-(cmd/command {:command :metascript.disable-file-hints
+
+
+(cmd/command {:command :metascript.disable-javascript-code-output
               :desc "Metascript: Disable javascript code output"
               :exec (fn [] (object/remove-tags mjs-lang [::print-js-code]))})
 
 
-(cmd/command {:command :metascript.enable-file-hints
+(cmd/command {:command :metascript.enable-javascript-code-output
               :desc "Metascript: Enable javascript code output"
               :exec (fn [] (object/add-tags mjs-lang [::print-js-code]))})
 
