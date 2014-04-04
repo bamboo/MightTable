@@ -14,7 +14,7 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
     var tripleDelimiters = parserConf.tripleDelimiters || new RegExp("^((//=)|(>>=)|(<<=)|(\\*\\*=))");
     var identifiers = parserConf.identifiers|| new RegExp("^[#\\\\]?[_A-Za-z][_A-Za-z0-9->]*[!?]?");
 
-    var wordOperators = wordRegexp(['typeof', 'instanceof', 'not']);
+    var wordOperators = wordRegexp(['typeof', 'instanceof']);
     var commonkeywords = ['var', 'meta', 'macro', 'const',
                           'try', 'catch', 'throw', 'finally',
                           'if', 'else',
