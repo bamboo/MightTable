@@ -13,6 +13,7 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
     var doubleDelimiters = parserConf.doubleDelimiters || new RegExp("^((\\+=)|(\\-=)|(\\*=)|(%=)|(/=)|(&=)|(\\|=)|(\\^=))");
     var tripleDelimiters = parserConf.tripleDelimiters || new RegExp("^((//=)|(>>=)|(<<=)|(\\*\\*=))");
     var identifiers = parserConf.identifiers|| new RegExp("^[#\\\\]?[_A-Za-z][_A-Za-z0-9->]*[!?]?");
+    var identifierSuffix = new RegExp("^([!?]|([_A-Za-z0-9->]+[!?]?))");
 
     var wordOperators = wordRegexp(['typeof', 'instanceof']);
     var commonkeywords = ['var', 'meta', 'macro', 'const',
@@ -34,6 +35,21 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
     var indentInfo = null;
 
     // tokenizers
+
+    function isDef(state) {
+      var lt = state.lastToken;
+      return (lt == 'var' || lt == 'const' || lt == 'macro');
+    }
+
+    function orIdentifier(stream, state, pattern, style) {
+      if (stream.match(pattern)) {
+        if (stream.match(identifierSuffix))
+          return isDef(state) ? 'def' : 'identifier';
+        return style;
+      }
+      return undefined;
+    }
+
     function tokenBase(stream, state) {
         // Handle scope changes
         if (stream.sol()) {
@@ -119,24 +135,24 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
             return null;
         }
 
-        if (stream.match(keywords)) {
-            return 'keyword';
+        var keywordOrIdentifier = orIdentifier(stream, state, keywords, 'keyword');
+        if (keywordOrIdentifier) {
+          return keywordOrIdentifier;
         }
 
-        if (stream.match(builtins)) {
-            return 'builtin';
+        var builtinOrIdentifier = orIdentifier(stream, state, builtins, 'builtin');
+        if (builtinOrIdentifier) {
+          return builtinOrIdentifier;
         }
 
-        if (stream.match(atoms)) {
-            return 'atom';
+        var atomOrIdentifier = orIdentifier(stream, state, atoms, 'atom');
+        if (atomOrIdentifier) {
+          return atomOrIdentifier;
         }
 
         var startingChar = stream.peek();
         if (stream.match(identifiers)) {
-          var lastToken = state.lastToken;
-          if (lastToken == 'var' || lastToken == 'const' || lastToken == 'macro') {
-             return 'def';
-          }
+          if (isDef(state)) return 'def';
           return (startingChar == '#' || startingChar == '\\')
             ? 'meta'
             : 'identifier';
