@@ -267,11 +267,6 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
             return style;
         }
 
-        // Handle decorators
-        if (current === '@') {
-            return stream.match(identifiers, false) ? 'meta' : ERRORCLASS;
-        }
-
         if ((style === 'variable' || style === 'builtin')
             && state.lastStyle === 'meta') {
             style = 'meta';
