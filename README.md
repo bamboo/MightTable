@@ -47,6 +47,15 @@ For convenience add the following to your *user.keymap*:
 
 The commands use the *jump-stack* which means you can jump back with the usual Ctrl-, shortcut.
 
+## Code Folding
+
+In addition to the regular *:editor.fold-code* command, the plugin also supports the commands *:metascript.fold-all* and *:metascript.unfold-all*:
+
+```Clojure
+     :editor.metascript {"alt-=" [:metascript.fold-all]
+                         "alt-shift-=" [:metascript.unfold-all]}
+```                         
+
 # TODO
 
 * use compiled js path with node client

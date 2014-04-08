@@ -133,6 +133,26 @@
               :exec enable-error-hints})
 
 
+;; code folding
+(defn fold-all [fold-or-unfold]
+  (when-let [editor (pool/last-active)]
+    (let [cm (editor/->cm-ed editor)
+          lines (range (.firstLine cm) (.lastLine cm))]
+      (editor/operation cm
+                        #(doseq [i lines]
+                           (.foldCode cm (js/CodeMirror.Pos i 0) nil fold-or-unfold))))))
+
+
+(cmd/command {:command :metascript.fold-all
+              :desc "Metascript: Fold all"
+              :exec #(fold-all "fold")})
+
+(cmd/command {:command :metascript.unfold-all
+              :desc "Metascript: Unfold all"
+              :exec #(fold-all "unfold")})
+
+
+
 
 ;; code evaluation
 
