@@ -36,15 +36,18 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
 
     // tokenizers
 
-    function isDef(state) {
+    function isDef(stream, state) {
       var lt = state.lastToken;
-      return (lt == 'var' || lt == 'const' || lt == 'macro');
+      return (lt == 'var'
+              || lt == 'const'
+              || lt == 'macro'
+              || stream.peek() == ':');
     }
 
     function orIdentifier(stream, state, pattern, style) {
       if (stream.match(pattern)) {
         if (stream.match(identifierSuffix))
-          return isDef(state) ? 'def' : 'identifier';
+          return isDef(stream, state) ? 'def' : 'identifier';
         return style;
       }
       return undefined;
@@ -152,7 +155,7 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
 
         var startingChar = stream.peek();
         if (stream.match(identifiers)) {
-          if (isDef(state)) return 'def';
+          if (isDef(stream, state)) return 'def';
           return (startingChar == '#' || startingChar == '\\')
             ? 'meta'
             : 'identifier';
@@ -162,6 +165,7 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
         stream.next();
         return ERRORCLASS;
     }
+
 
     function tokenStringFactory(delimiter) {
         var singleline = delimiter.length == 1;
