@@ -23,9 +23,10 @@
    (or plugins/*plugin-dir* "/home/bamboo/.config/LightTable/plugins/MightTable")
    "node_modules/meta-script"))
 
+
 (def check-for-errors
   (background
-   (fn [obj-id code metascript-path]
+   (fn [obj-id code path metascript-path]
      (letfn [(map-error [e] {:message (.-message e)
                              :line (dec (.-line e))
                              :ch (.-column e)
@@ -33,13 +34,16 @@
              (map-errors [es] (mapv map-error es))]
 
        (let [meta ((js/require metascript-path))
-             compiler (. meta compilerFromString code)
+             compiler (. meta compilerFromString code path)
              ast (. compiler produceAst)
              errors (map-errors (.-errors compiler))]
          (raise obj-id :mjs-hinted errors))))))
 
+(defn ->path [editor]
+  (:path (:info @editor)))
+
 (defn start-check-for-errors [this]
-  (check-for-errors this (editor/->val this) metascript-path))
+  (check-for-errors this (editor/->val this) (->path this) metascript-path))
 
 (declare jump-to)
 
@@ -173,8 +177,8 @@
 (defn inspect [thing depth]
   (util-inspect thing false (or depth 5)))
 
-(defn parse [code]
-  (let [compiler (. meta-script compilerFromString code)
+(defn parse [code & [path]]
+  (let [compiler (. meta-script compilerFromString code path)
         ast (-> (doto compiler (. parse) (. pipeline)) .-root)]
     (. ast normalizeLocation)
     {:ast ast :compiler compiler}))
@@ -184,8 +188,8 @@
         code (.-code (. compiler generate jsAst))]
     {:code code :node node :js-ast jsAst}))
 
-(defn compile-top-level-at [code line ch]
-  (let [{:keys [ast compiler]} (parse code)]
+(defn compile-top-level-at [code line ch path]
+  (let [{:keys [ast compiler]} (parse code path)]
     (when-let [node (. ast findTopLevelAt line ch)]
       (compile-node compiler node))))
 
@@ -245,7 +249,7 @@
 (defn eval-one [editor]
   (try
     (let [{:keys [line ch]} (editor/->cursor editor)]
-      (eval editor (compile-top-level-at (editor/->val editor) (inc line) ch)))
+      (eval editor (compile-top-level-at (editor/->val editor) (inc line) ch (->path editor))))
     (catch js/global.Error e
       (object/raise editor
                     :editor.eval.js.exception
@@ -253,7 +257,7 @@
 
 (defn eval-file [editor]
   (let [code (editor/->val editor)
-        {:keys [ast compiler]} (parse code)]
+        {:keys [ast compiler]} (parse code (->path editor))]
     (dorun
      (map #(eval editor (compile-node compiler %))
           (node-seq ast)))))
@@ -293,7 +297,7 @@
       (last xs)))
 
 (defn jump-to [editor pos]
-  (object/raise jump-stack/jump-stack :jump-stack.push! editor (:path (:info @editor)) pos))
+  (object/raise jump-stack/jump-stack :jump-stack.push! editor (->path editor) pos))
 
 (defn cursor-location [editor]
   (->location (editor/->cursor editor)))
