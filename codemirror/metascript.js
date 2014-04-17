@@ -23,6 +23,7 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
                           'if', 'else',
                           'loop', 'next', 'end',
                           'do', 'give', 'return', 'new',
+                          'fun',
                           'delete', 'this'];
     var commonBuiltins = ['require', '#external',
                           'Object', 'Array', 'String',
@@ -43,6 +44,7 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
       return (lt == 'var'
               || lt == 'const'
               || lt == 'macro'
+              || lt == 'fun'
               || stream.peek() == ':');
     }
 
