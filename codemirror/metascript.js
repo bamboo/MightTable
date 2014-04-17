@@ -7,13 +7,15 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
         return new RegExp("^((" + words.join(")|(") + "))\\b");
     }
 
-    var singleOperators = parserConf.singleOperators || new RegExp("^[\\+\\-\\*/%&|\\^~<>!]");
-    var singleDelimiters = parserConf.singleDelimiters || new RegExp('^[\\(\\)\\[\\]\\{\\}@,:`=;\\.]');
-    var doubleOperators = parserConf.doubleOperators || new RegExp("^((->)|(==)|(!=)|(<=)|(>=)|(<>)|(<<)|(>>)|(//)|(\\*\\*))");
+
+    var unquoteOperators = new RegExp("^((~`)|`)");
+    var singleOperators = parserConf.singleOperators || new RegExp("^[\\+\\*/%&|\\^~<>!]");
+    var singleDelimiters = parserConf.singleDelimiters || new RegExp('^[\\(\\)\\[\\]\\{\\}@,:=;\\.]');
+    var doubleOperators = parserConf.doubleOperators || new RegExp("^((==)|(!=)|(<=)|(>=)|(<>)|(<<)|(>>)|(//)|(\\*\\*))");
     var doubleDelimiters = parserConf.doubleDelimiters || new RegExp("^((\\+=)|(\\-=)|(\\*=)|(%=)|(/=)|(&=)|(\\|=)|(\\^=))");
     var tripleDelimiters = parserConf.tripleDelimiters || new RegExp("^((//=)|(>>=)|(<<=)|(\\*\\*=))");
-    var identifiers = parserConf.identifiers|| new RegExp("^[#\\\\]?[_A-Za-z][_A-Za-z0-9->]*[!?]?");
-    var identifierSuffix = new RegExp("^([!?]|([_A-Za-z0-9->]+[!?]?))");
+    var identifiers = parserConf.identifiers || new RegExp("^[#\\\\]?[_A-Za-z\\-][_A-Za-z0-9>\\-]*[!?]?");
+    var identifierSuffix = new RegExp("^([!?]|([_A-Za-z0-9\\->]+[!?]?))");
 
     var wordOperators = wordRegexp(['typeof', 'instanceof']);
     var commonkeywords = ['var', 'meta', 'macro', 'const',
@@ -129,6 +131,10 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
         if (stream.match(tripleDelimiters) || stream.match(doubleDelimiters)) {
             return null;
         }
+
+        if (stream.match(unquoteOperators))
+             return 'meta';
+
         if (stream.match(doubleOperators)
             || stream.match(singleOperators)
             || stream.match(wordOperators)) {
@@ -155,7 +161,10 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
 
         var startingChar = stream.peek();
         if (stream.match(identifiers)) {
-          if (isDef(stream, state)) return 'def';
+          if (stream.current() == '->')
+            return 'operator';
+          if (isDef(stream, state))
+            return 'def';
           return (startingChar == '#' || startingChar == '\\')
             ? 'meta'
             : 'identifier';
