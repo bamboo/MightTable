@@ -9,9 +9,9 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
 
 
     var unquoteOperators = new RegExp("^((~`)|`)");
-    var singleOperators = parserConf.singleOperators || new RegExp("^[\\+\\*/%&|\\^~<>!]");
+    var operatorSet = "-\\+\\*/%&|\\^~=<>!";
+    var operators = parserConf.operators || new RegExp('^[' + operatorSet + '][' + operatorSet + '\\.]*');
     var singleDelimiters = parserConf.singleDelimiters || new RegExp('^[\\(\\)\\[\\]\\{\\}@,:=;\\.]');
-    var doubleOperators = parserConf.doubleOperators || new RegExp("^((==)|(!=)|(<=)|(>=)|(<>)|(<<)|(>>)|(//)|(\\*\\*))");
     var doubleDelimiters = parserConf.doubleDelimiters || new RegExp("^((\\+=)|(\\-=)|(\\*=)|(%=)|(/=)|(&=)|(\\|=)|(\\^=))");
     var tripleDelimiters = parserConf.tripleDelimiters || new RegExp("^((//=)|(>>=)|(<<=)|(\\*\\*=))");
     var identifiers = parserConf.identifiers || new RegExp("^[#\\\\]?[_A-Za-z\\-][_A-Za-z0-9>\\-]*[!?]?");
@@ -137,11 +137,6 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
         if (stream.match(unquoteOperators))
              return 'meta';
 
-        if (stream.match(doubleOperators)
-            || stream.match(singleOperators)
-            || stream.match(wordOperators)) {
-            return 'operator';
-        }
         if (stream.match(singleDelimiters)) {
             return null;
         }
@@ -171,6 +166,11 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
             ? 'meta'
             : 'identifier';
         }
+
+        if (stream.match(operators) || stream.match(wordOperators)) {
+            return 'operator';
+        }
+
 
         // Handle non-detected items
         stream.next();
