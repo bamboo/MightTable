@@ -18,7 +18,7 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
     var identifierSuffix = new RegExp("^([!?]|([_A-Za-z0-9\\->]+[!?]?))");
 
     var wordOperators = wordRegexp(['typeof', 'instanceof']);
-    var commonkeywords = ['var', 'meta', 'macro', 'const',
+    var commonkeywords = ['var', 'const',
                           'try', 'catch', 'throw', 'finally',
                           'if', 'else',
                           'loop', 'next', 'end',
