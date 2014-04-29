@@ -41,11 +41,12 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
 
     function isDef(stream, state) {
       var lt = state.lastToken;
-      return (lt == 'var'
-              || lt == 'const'
-              || lt == 'macro'
-              || lt == 'fun'
-              || stream.peek() == ':');
+      return stream.peek() == ':'
+        || (lt && (lt == 'var'
+                   || lt == 'const'
+                   || lt == 'macro'
+                   || lt == 'fun'
+                   || lt.startsWith('#def')));
     }
 
     function orIdentifier(stream, state, pattern, style) {
