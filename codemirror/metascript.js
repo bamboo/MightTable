@@ -156,6 +156,11 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
           return atomOrIdentifier;
         }
 
+        var operatorOrIdentifier = orIdentifier(stream, state, wordOperators, 'operator');
+        if (operatorOrIdentifier) {
+          return operatorOrIdentifier;
+        }
+
         var startingChar = stream.peek();
         if (stream.match(identifiers)) {
           if (stream.current() == '->')
@@ -167,7 +172,7 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
             : 'identifier';
         }
 
-        if (stream.match(operators) || stream.match(wordOperators)) {
+        if (stream.match(operators)) {
             return 'operator';
         }
 
