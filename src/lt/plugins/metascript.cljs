@@ -178,7 +178,7 @@
   (util-inspect thing false (or depth 5)))
 
 (defn parse [code & [path]]
-  (let [compiler (. meta-script compilerFromString code path)
+  (let [compiler (. meta-script compilerFromString code path true)
         ast (-> (doto compiler (. parse) (. pipeline)) .-root)]
     (. ast normalizeLocation)
     {:ast ast :compiler compiler}))
