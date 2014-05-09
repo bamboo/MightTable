@@ -44,8 +44,8 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
       return stream.peek() == ':'
         || (lt && (lt == 'var'
                    || lt == 'const'
-                   || lt == 'macro'
                    || lt == 'fun'
+                   || lt == '#keepmacro'
                    || lt.startsWith('#def')));
     }
 
