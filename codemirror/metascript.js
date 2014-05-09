@@ -3,8 +3,15 @@
 CodeMirror.defineMode("metascript", function(conf, parserConf) {
     var ERRORCLASS = 'error';
 
-    function wordRegexp(words) {
-        return new RegExp("^((" + words.join(")|(") + "))\\b");
+    function orRegexp(patterns) {
+      return "(" + patterns.join(")|(") + ")";
+    }
+
+    function wordRegexp(words, specialWords) {
+        var wordsPattern = "(" + orRegexp(words) + ")\\b";
+        return specialWords
+          ? new RegExp("^" + orRegexp([orRegexp(specialWords), wordsPattern]))
+          : new RegExp("^" + wordsPattern);
     }
 
 
@@ -18,19 +25,16 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
     var identifierSuffix = new RegExp("^([!?]|([_A-Za-z0-9\\->]+[!?]?))");
 
     var wordOperators = wordRegexp(['typeof', 'instanceof']);
-    var commonkeywords = ['var', 'const',
-                          'try', 'catch', 'throw', 'finally',
-                          'if', 'else',
-                          'loop', 'next', 'end',
-                          'do', 'give', 'return', 'new',
-                          'fun',
-                          'delete', 'this'];
+    var specialKeywords = ['next\\!', 'end\\!',
+                          'do\\!', 'give\\!'];
+    var commonkeywords = ['var', 'const', 'try', 'catch', 'throw', 'finally',
+                          'if', 'else', 'loop', 'do', 'return', 'new',
+                          'fun', 'delete', 'this'];
     var commonBuiltins = ['require', '#external',
                           'Object', 'Array', 'String',
-                          'Error', 'Math',
-                          'JSON', 'RegExp'];
+                          'Error', 'Math', 'JSON', 'RegExp', 'void'];
     var stringPrefixes = new RegExp("^('{3}|\"{3}|['\"])");
-    keywords = wordRegexp(commonkeywords);
+    keywords = wordRegexp(commonkeywords, specialKeywords);
     builtins = wordRegexp(commonBuiltins);
 
     var atoms = wordRegexp(['true', 'false', 'null', 'undefined', 'NaN']);
@@ -38,7 +42,6 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
     var indentInfo = null;
 
     // tokenizers
-
     function isDef(stream, state) {
       var lt = state.lastToken;
       return stream.peek() == ':'
