@@ -33,7 +33,7 @@ CodeMirror.defineMode("metascript", function(conf, parserConf) {
     keywords = wordRegexp(commonkeywords);
     builtins = wordRegexp(commonBuiltins);
 
-    var atoms = wordRegexp(['true', 'false', 'null', 'undefined']);
+    var atoms = wordRegexp(['true', 'false', 'null', 'undefined', 'NaN']);
 
     var indentInfo = null;
 
