@@ -4,13 +4,17 @@ Metascript plugin for LightTable
 
 # Installation
 
+Install using the plugin manager.
+
+# Hacking
+
 * Clone the project into LightTable plugins directory
 ```
 cd ~/.config/LightTable/Plugins
 git clone git@github.com:bamboo/MightTable.git
 cd MightTable
 ```
-* Install the meta-script package
+* If you need a more recent metascript compiler, bump the dependency version number in the project.clj file and install it with
 ```
 lein npm install
 ```
