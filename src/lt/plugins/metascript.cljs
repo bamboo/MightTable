@@ -33,8 +33,8 @@
                              :nested-errors (map-errors (.-nestedErrors e))})
              (map-errors [es] (mapv map-error es))]
 
-       (let [meta ((js/require metascript-path))
-             compiler (. meta compilerFromString code path)
+       (let [mjs ((js/require metascript-path))
+             compiler (. mjs compilerFromString code path)
              ast (. compiler produceAst)
              errors (map-errors (.-errors compiler))]
          (raise obj-id :mjs-hinted errors))))))
@@ -170,7 +170,7 @@
    node-seq
    ast))
 
-(def meta-script ((js/require metascript-path)))
+(def mjs ((js/require metascript-path)))
 
 (def util-inspect (.-inspect (js/require "util")))
 
@@ -178,7 +178,7 @@
   (util-inspect thing false (or depth 5)))
 
 (defn parse [code & [path]]
-  (let [compiler (. meta-script compilerFromString code path true)
+  (let [compiler (. mjs compilerFromString code path true)
         ast (-> (doto compiler (. parse) (. pipeline)) .-root)]
     (. ast normalizeLocation)
     {:ast ast :compiler compiler}))
