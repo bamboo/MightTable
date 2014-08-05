@@ -38,7 +38,7 @@ var map_errors = ((function (orig__7828__auto__,msg__7829__auto__,args__7830__au
 return (function map_errors(es){return cljs.core.mapv.call(null,map_error,es);
 });})(orig__7828__auto__,msg__7829__auto__,args__7830__auto__,raise))
 ;
-var meta = require(metascript_path).call(null);var compiler = meta.compilerFromString(code,path);var ast = compiler.produceAst();var errors = map_errors.call(null,compiler.errors);return raise.call(null,obj_id,new cljs.core.Keyword(null,"mjs-hinted","mjs-hinted",1377635343),errors);
+var mjs = require(metascript_path).call(null);var compiler = mjs.compilerFromString(code,path);var ast = compiler.produceAst();var errors = map_errors.call(null,compiler.errors);return raise.call(null,obj_id,new cljs.core.Keyword(null,"mjs-hinted","mjs-hinted",1377635343),errors);
 });})(orig__7828__auto__,msg__7829__auto__,args__7830__auto__,raise))
 .apply(null,args__7830__auto__);
 }));
@@ -433,7 +433,7 @@ break;
 lt.plugins.metascript.ast_seq = (function ast_seq(ast){return cljs.core.tree_seq.call(null,(function (node){return (node.argCount() > 0);
 }),lt.plugins.metascript.node_seq,ast);
 });
-lt.plugins.metascript.meta_script = require(lt.plugins.metascript.metascript_path).call(null);
+lt.plugins.metascript.mjs = require(lt.plugins.metascript.metascript_path).call(null);
 lt.plugins.metascript.util_inspect = require("util").inspect;
 lt.plugins.metascript.inspect = (function inspect(thing,depth){return lt.plugins.metascript.util_inspect.call(null,thing,false,(function (){var or__6364__auto__ = depth;if(cljs.core.truth_(or__6364__auto__))
 {return or__6364__auto__;
@@ -446,7 +446,7 @@ lt.plugins.metascript.inspect = (function inspect(thing,depth){return lt.plugins
 * @param {...*} var_args
 */
 lt.plugins.metascript.parse = (function() { 
-var parse__delegate = function (code,p__7940){var vec__7943 = p__7940;var path = cljs.core.nth.call(null,vec__7943,0,null);var compiler = lt.plugins.metascript.meta_script.compilerFromString(code,path,true);var ast = (function (){var G__7944 = compiler;G__7944.parse();
+var parse__delegate = function (code,p__7940){var vec__7943 = p__7940;var path = cljs.core.nth.call(null,vec__7943,0,null);var compiler = lt.plugins.metascript.mjs.compilerFromString(code,path,true);var ast = (function (){var G__7944 = compiler;G__7944.parse();
 G__7944.pipeline();
 return G__7944;
 })().root;ast.normalizeLocation();
